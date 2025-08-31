@@ -1,31 +1,36 @@
 
 import React, { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Layout } from '../../components/Layout'
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
-import { Badge } from '../../components/ui/badge'
-import { Button } from '../../components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '../../components/ui/avatar'
-import { Progress } from '../../components/ui/progress'
-import { ProjectEmailInterface } from '../../components/ProjectEmailInterface'
-import { supabase } from '../../lib/supabase'
-import { 
-  ArrowLeft, 
-  FileText, 
-  User, 
-  Building, 
-  Euro, 
-  Phone, 
-  Mail, 
-  MapPin, 
+import { Layout } from '@/components/Layout'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Progress } from '@/components/ui/progress'
+import { ProjectEmailInterface } from '@/components/ProjectEmailInterface'
+import ProjectEmailHistory from '@/components/ProjectEmailHistory'
+import { supabase } from '@/lib/supabase'
+import {
+  ArrowLeft,
+  FileText,
+  User,
+  Building,
+  Euro,
+  Phone,
+  Mail,
+  MapPin,
   Calendar,
   Clock,
   MessageCircle,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  History,
+  Eye,
+  MessageSquare,
+  ExternalLink
 } from 'lucide-react'
-import type { Contact, Projet, Contrat, Interaction } from '../../lib/types'
+import type { Contact, Projet, Contrat, Interaction } from '@/lib/types'
 
 interface ProjectData {
   projet: Projet
@@ -196,7 +201,7 @@ export default function ProjectDetailsPage() {
 
         {/* Onglets */}
         <Tabs defaultValue="resume" className="w-full">
-          <TabsList className="grid w-full grid-cols-4 mb-8 rounded-2xl">
+          <TabsList className="grid w-full grid-cols-5 mb-8 rounded-2xl">
             <TabsTrigger value="resume" className="flex items-center space-x-2 rounded-xl">
               <FileText className="w-4 h-4" />
               <span>Résumé</span>
@@ -211,7 +216,11 @@ export default function ProjectDetailsPage() {
             </TabsTrigger>
             <TabsTrigger value="communications" className="flex items-center space-x-2 rounded-xl">
               <MessageCircle className="w-4 h-4" />
-              <span>Communications</span>
+              <span>Communications ({interactions.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="tracking" className="flex items-center space-x-2 rounded-xl">
+              <Mail className="w-4 h-4" />
+              <span>📧 Suivi Email</span>
             </TabsTrigger>
           </TabsList>
 
@@ -243,12 +252,65 @@ export default function ProjectDetailsPage() {
                       <p className="font-semibold">{projet.commercial}</p>
                     </div>
                   </div>
+                  {/* Commentaires/Notes améliorés */}
                   {projet.notes && (
                     <div className="pt-4 border-t">
-                      <p className="text-sm text-muted-foreground mb-2">Commentaire</p>
-                      <p className="text-sm bg-muted/50 p-3 rounded-xl">{projet.notes}</p>
+                      <div className="flex items-center gap-2 mb-3">
+                        <MessageSquare className="w-5 h-5 text-primary" />
+                        <p className="text-sm font-medium text-foreground">Notes & Commentaires</p>
+                        <Badge variant="secondary" className="text-xs">
+                          Interne
+                        </Badge>
+                      </div>
+                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+                        <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed whitespace-pre-wrap">
+                          {projet.notes}
+                        </p>
+                      </div>
                     </div>
                   )}
+
+                  {/* Informations supplémentaires depuis la base de données */}
+                  <div className="pt-4 border-t">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Eye className="w-5 h-5 text-primary" />
+                      <p className="text-sm font-medium text-foreground">Informations Système</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
+                        <p className="text-muted-foreground mb-1">Contact ID</p>
+                        <p className="font-mono text-gray-900 dark:text-gray-100">{projet.contact_id}</p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
+                        <p className="text-muted-foreground mb-1">Projet ID</p>
+                        <p className="font-mono text-gray-900 dark:text-gray-100">{projet.projet_id}</p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
+                        <p className="text-muted-foreground mb-1">Création interne</p>
+                        <p className="font-mono text-gray-900 dark:text-gray-100">
+                          {new Date(projet.created_at).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
+                        <p className="text-muted-foreground mb-1">Dernière MAJ</p>
+                        <p className="font-mono text-gray-900 dark:text-gray-100">
+                          {new Date(projet.updated_at).toLocaleDateString('fr-FR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -448,8 +510,160 @@ export default function ProjectDetailsPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="communications">
-            <ProjectEmailInterface projectId={projet.projet_id} />
+          <TabsContent value="communications" className="space-y-6">
+            {/* Historique des communications */}
+            <Card className="rounded-2xl border-0 shadow-md hover:shadow-lg transition-all duration-300">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  Historique des Communications ({interactions.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {interactions.length > 0 ? (
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {interactions.map((interaction) => (
+                      <div key={interaction.id} className="flex items-start space-x-3 p-4 bg-muted/30 rounded-xl">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="outline" className="capitalize">
+                                {interaction.type || 'Communication'}
+                              </Badge>
+                              {interaction.canal && (
+                                <Badge variant="secondary" className="text-xs">
+                                  {interaction.canal}
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-xs text-muted-foreground">
+                              {interaction.created_at && new Date(interaction.created_at).toLocaleDateString('fr-FR', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
+                          </div>
+                          {interaction.sujet && (
+                            <h4 className="font-medium text-sm mb-1">{interaction.sujet}</h4>
+                          )}
+                          {interaction.message && (
+                            <p className="text-sm text-muted-foreground">{interaction.message}</p>
+                          )}
+                          {interaction.workflow_name && (
+                            <div className="flex items-center space-x-1 mt-2">
+                              <span className="text-xs text-blue-600 font-medium">Workflow:</span>
+                              <span className="text-xs text-blue-600">{interaction.workflow_name}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <MessageCircle className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">Aucune communication pour ce projet</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Interface d'envoi d'emails */}
+            <ProjectEmailInterface
+              projectId={projet.projet_id}
+            />
+          </TabsContent>
+
+          <TabsContent value="tracking" className="space-y-6">
+            {/* Actions rapide pour le suivi email */}
+            <Card className="rounded-2xl border-0 shadow-md">
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Mail className="w-5 h-5 mr-2 text-blue-600" />
+                  Actions de Suivi Email
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Gérez les communications et consultez l'historique pour ce projet
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex flex-col items-center space-y-2 hover:bg-blue-50 hover:border-blue-300"
+                    onClick={() => {
+                      const trackingTab = document.querySelector('[data-value="communications"]') as HTMLElement;
+                      if (trackingTab && trackingTab.click) trackingTab.click();
+                    }}
+                  >
+                    <MessageSquare className="w-8 h-8 text-blue-600" />
+                    <div className="text-center">
+                      <div className="font-medium">Nouvel Email</div>
+                      <div className="text-xs text-muted-foreground">Envoyer un message personnalisé</div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex flex-col items-center space-y-2 hover:bg-green-50 hover:border-green-300"
+                    onClick={() => {
+                      // Action pour consulter l'historique détaillé
+                      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                    }}
+                  >
+                    <History className="w-8 h-8 text-green-600" />
+                    <div className="text-center">
+                      <div className="font-medium">Historique Complet</div>
+                      <div className="text-xs text-muted-foreground">Voir tous les envois</div>
+                    </div>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="h-auto p-4 flex flex-col items-center space-y-2 hover:bg-purple-50 hover:border-purple-300"
+                    onClick={() => {
+                      // Ouvrir dans une nouvelle fenêtre pour comparer
+                      window.open(`/campaigns?project=${projet.projet_id}`, '_blank');
+                    }}
+                  >
+                    <ExternalLink className="w-8 h-8 text-purple-600" />
+                    <div className="text-center">
+                      <div className="font-medium">Voir Campagnes</div>
+                      <div className="text-xs text-muted-foreground">Campagnes liées</div>
+                    </div>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Historique des emails pour ce projet - Amélioré */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 rounded-2xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="text-center flex-1">
+                  <Mail className="w-16 h-16 mx-auto mb-4 text-blue-600" />
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Suivi Email Détaillé</h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Historique complet des emails et interactions pour ce projet
+                  </p>
+                </div>
+                <div className="flex flex-col items-end space-y-2">
+                  <Button variant="secondary" size="sm">
+                    <Eye className="w-4 h-4 mr-2" />
+                    Affichage détail
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <History className="w-4 h-4 mr-2" />
+                    Filtrer par date
+                  </Button>
+                </div>
+              </div>
+
+              <ProjectEmailHistory projectId={projet.projet_id} />
+            </div>
           </TabsContent>
         </Tabs>
       </div>

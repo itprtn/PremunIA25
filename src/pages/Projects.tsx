@@ -1,30 +1,31 @@
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '../../components/auth-provider'
 import { useNavigate } from 'react-router-dom'
 import { Layout } from '../../components/Layout'
-import { ProjectsTab } from '../../components/ProjectsTab'
+import { OptimizedLoader } from '../../components/ui/optimized-loader'
 import { supabase } from '../../lib/supabase'
 import type { Contact, Projet } from '../../lib/types'
+import { FolderOpen } from 'lucide-react'
+
+// Import statique temporaire pour éviter les erreurs de lazy loading
+import { ProjectsTab } from '../../components/ProjectsTab'
 
 export default function ProjectsPage() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
   const [contacts, setContacts] = useState<Contact[]>([])
   const [projets, setProjets] = useState<Projet[]>([])
+  // Suppression du loader pour plus de fluidité
 
   useEffect(() => {
+    if (!loading && !user) {
+      navigate('/login')
+    }
     if (user) {
       loadData()
     }
-  }, [user])
-
-  if (loading) return null
-
-  if (!user) {
-    navigate('/login')
-    return null
-  }
+  }, [user, loading, navigate])
 
   const loadData = async () => {
     try {
@@ -42,7 +43,19 @@ export default function ProjectsPage() {
 
   return (
     <Layout title="Gestion des Projets">
-      <ProjectsTab />
+      <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Header minimaliste */}
+        <div className="mb-12">
+          <h1 className="text-3xl font-light text-slate-900 mb-2">
+            Projets
+          </h1>
+          <p className="text-slate-600 text-base">
+            Gestion de vos projets commerciaux
+          </p>
+        </div>
+
+        <ProjectsTab />
+      </div>
     </Layout>
   )
 }
