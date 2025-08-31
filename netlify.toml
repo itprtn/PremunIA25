@@ -7,25 +7,19 @@
   NODE_VERSION = "20"
   VITE_SUPABASE_PROJECT_ID = "wybhtprxiwgzmpmnfceq"
   VITE_SUPABASE_URL = "https://wybhtprxiwgzmpmnfceq.supabase.co"
-  VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5Ymh0cHJ4aXdnem1wbW5mY2VxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwMzIwODksImV4cCI6MjA2NjYwODA4OX0.ctFmwHC_iitVB16WB7lY616lIp0CAHBUGRaoi56ruqc"
+  VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 
 [[headers]]
   for = "/*"
   [headers.values]
-    # XSS Protection
     X-Frame-Options = "DENY"
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-
-    # CSP - Content Security Policy
-    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://wybhtprxiwgzmpmnfceq.supabase.co;"
-
-    # Security Headers additionnels
+    Content-Security-Policy = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; connect-src 'self' https://wybhtprxiwgzmpmnfceq.supabase.co https://api.brevo.com;"
     X-Permitted-Cross-Domain-Policies = "none"
     X-DNS-Prefetch-Control = "off"
     Strict-Transport-Security = "max-age=31536000; includeSubDomains"
-
 
 [[redirects]]
   from = "/*"
