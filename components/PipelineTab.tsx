@@ -11,7 +11,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog"
 import { Label } from "./ui/label"
 import { supabase } from "../lib/supabase"
 import type { Projet, Contact, Contrat } from "../lib/types"
-import { PipelineAnalyticsAdvanced } from "./analytics/PipelineAnalyticsAdvanced"
 
 interface PipelineTabProps {
   projets: Projet[]
@@ -363,13 +362,6 @@ export function PipelineTab({ projets, contacts, contrats, onProjectUpdate }: Pi
           )
         })}
       </div>
-
-      {/* Analytics Avancé */}
-      <PipelineAnalyticsAdvanced 
-        projets={projets}
-        contrats={contrats}
-        contacts={contacts}
-      />
 
       {/* Project Details Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

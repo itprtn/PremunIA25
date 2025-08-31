@@ -1,6 +1,5 @@
 import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { CommercialPerformanceAnalytics } from './analytics/CommercialPerformanceAnalytics';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RevenueAnalytics } from './analytics/RevenueAnalytics';
 import { ProductAnalytics } from './analytics/ProductAnalytics';
 import { PipelineAnalytics } from './analytics/PipelineAnalytics';
@@ -14,16 +13,12 @@ interface CommercialAnalyticsProps {
 
 export function CommercialAnalytics({ contacts = [], projets = [], contrats = [] }: CommercialAnalyticsProps) {
   return (
-    <Tabs defaultValue="performance" className="w-full">
-      <TabsList className="grid w-full grid-cols-4">
-        <TabsTrigger value="performance">Performance Commerciale</TabsTrigger>
+    <Tabs defaultValue="revenue" className="w-full">
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="revenue">Analyse des Revenus</TabsTrigger>
         <TabsTrigger value="products">Analyse Produits</TabsTrigger>
         <TabsTrigger value="pipeline">Analyse du Pipeline</TabsTrigger>
       </TabsList>
-      <TabsContent value="performance">
-        <CommercialPerformanceAnalytics contacts={contacts} projets={projets} contrats={contrats} />
-      </TabsContent>
       <TabsContent value="revenue">
         <RevenueAnalytics projets={projets} contrats={contrats} />
       </TabsContent>

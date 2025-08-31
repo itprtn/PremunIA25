@@ -118,7 +118,7 @@ export function BulkStatusEmailDialog({
         campagne_id: campaign.id,
         projet_id: r.projectId,
         contact_id: r.contactId ?? null,
-        email_destinataire: r.email,
+        destinataire: r.email,
         sujet: personalize(template.sujet, r),
         contenu_html: personalize(template.contenu_html, r),
         statut: "en_attente",
@@ -128,11 +128,11 @@ export function BulkStatusEmailDialog({
       const { data: inserted, error: insertErr } = await supabase
         .from("envois_email")
         .insert(envois)
-        .select("id, email_destinataire")
+        .select("id, destinataire")
       if (insertErr) throw insertErr
 
       // 5) Envoi effectif via la fonction `send-email`
-      const idByEmail = new Map(inserted?.map(i => [i.email_destinataire, i.id]))
+      const idByEmail = new Map(inserted?.map(i => [i.destinataire, i.id]))
       for (const r of validRecipients) {
         const body = {
           to: r.email,

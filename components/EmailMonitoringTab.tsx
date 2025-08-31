@@ -7,7 +7,7 @@ import { Badge } from "./ui/badge"
 import { Progress } from "./ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select"
-import { supabase, supabaseUrl, supabaseAnonKey } from "../lib/supabase"
+import { supabase } from "../lib/supabase"
 
 interface EmailMonitoringTabProps {
   campaigns: any[]
@@ -23,7 +23,7 @@ interface QueueStats {
 
 interface RealtimeEmail {
   id: number
-  email_destinataire: string
+  destinataire: string
   sujet: string
   statut: string
   created_at: string
@@ -98,7 +98,7 @@ export function EmailMonitoringTab({ campaigns }: EmailMonitoringTabProps) {
 
       const { data: emailData, error } = await supabase
         .from("email_queue")
-        .select("id, email_destinataire, sujet, statut, created_at, sent_at, error_message, campagne_id")
+        .select("id, destinataire, sujet, statut, created_at, sent_at, error_message, campagne_id")
         .gte("created_at", timeFilter)
         .order("created_at", { ascending: false })
         .limit(50)
@@ -148,22 +148,15 @@ export function EmailMonitoringTab({ campaigns }: EmailMonitoringTabProps) {
   const processEmailQueue = async () => {
     setIsProcessing(true)
     try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/process-email-queue`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${supabaseAnonKey}`,
-        },
-        body: JSON.stringify({}),
+      const { data, error } = await supabase.functions.invoke('process-email-queue', {
+        body: {}
       })
 
-      const result = await response.json()
-
-      if (result.success) {
-        console.log("Queue processed successfully:", result)
-        loadMonitoringData() // Refresh data
+      if (error) {
+        console.error("Queue processing failed:", error)
       } else {
-        console.error("Queue processing failed:", result.error)
+        console.log("Queue processed successfully:", data)
+        loadMonitoringData() // Refresh data
       }
     } catch (error) {
       console.error("Error processing queue:", error)
@@ -322,7 +315,7 @@ export function EmailMonitoringTab({ campaigns }: EmailMonitoringTabProps) {
                     <div className="flex items-center space-x-3">
                       <i className={getStatusIcon(email.statut)}></i>
                       <div>
-                        <div className="font-medium text-sm">{email.email_destinataire}</div>
+                        <div className="font-medium text-sm">{email.destinataire}</div>
                         <div className="text-xs text-muted-foreground truncate max-w-xs">{email.sujet}</div>
                       </div>
                     </div>
@@ -421,7 +414,7 @@ export function EmailMonitoringTab({ campaigns }: EmailMonitoringTabProps) {
                       <div className="flex items-start space-x-3">
                         <i className="fas fa-exclamation-triangle text-red-600 mt-1"></i>
                         <div>
-                          <div className="font-medium text-sm">{email.email_destinataire}</div>
+                          <div className="font-medium text-sm">{email.destinataire}</div>
                           <div className="text-xs text-muted-foreground mb-1">{email.sujet}</div>
                           <div className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded">
                             {email.error_message || "Erreur inconnue"}

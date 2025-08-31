@@ -368,8 +368,8 @@ export function EmailTestInterface() {
                   sendHistory.map((log, index) => (
                     <div key={index} className="p-3 border rounded-lg">
                       <div className="flex items-center justify-between mb-2">
-                        <div className="font-medium truncate">{log.email_destinataire}</div>
-                        {getStatusBadge(log.statut)}
+                       <div className="font-medium truncate">{log.destinataire}</div>
+                       {getStatusBadge(log.statut)}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {new Date(log.created_at).toLocaleString("fr-FR")}

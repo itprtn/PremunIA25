@@ -6,20 +6,74 @@ import type { DateRange } from "react-day-picker"
 import type { Interaction, Contact, Projet, Contrat } from "../lib/types"
 import { DateRangePicker } from "./ui/DateRangePicker"
 import { CommercialAnalytics } from "./CommercialAnalytics"
-import { AIAnalytics } from "./ai/AIAnalytics"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
-import { Badge } from "./ui/badge"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { BarChart3 } from "lucide-react"
 
 interface DashboardTabProps {
-  stats: any
-  clients: any[]
+  stats: {
+    totalContacts: number
+    activeClients: number
+    prospects: number
+    totalRevenue: number
+    conversionRate: string
+    avgRevenuePerClient: string
+    growthRate: string
+    activeCampaigns: number
+    crossSellOpportunities: number
+    aiScore: number
+  }
+  clients: Contact[]
   projets: Projet[]
   contrats: Contrat[]
-  segments: any[]
-  workflows: any[]
-  campaigns: any[]
-  aiPredictions: any[]
+  segments: Array<{
+    id: number
+    nom: string
+    description?: string
+    criteres: Record<string, string | number | boolean>
+    couleur?: string
+    created_at?: string
+  }>
+  workflows: Array<{
+    id: number
+    nom?: string
+    description?: string
+    declencheur?: string
+    etapes?: Record<string, string | number | boolean>
+    statut?: string
+    segment_id?: number
+    template_id?: number
+    actif?: boolean
+    created_at?: string
+  }>
+  campaigns: Array<{
+    id: number
+    nom: string
+    description?: string
+    segment_id?: number
+    template_id?: number
+    statut?: string
+    date_lancement?: string
+    date_fin?: string
+    date_planifiee?: string
+    email_config_id?: number
+    contact_count?: number
+    tracking_stats?: {
+      envois: number
+      ouvertures: number
+      clics: number
+      bounces: number
+      desabonnements: number
+    }
+    created_at?: string
+  }>
+  aiPredictions: Array<{
+    type: string
+    confidence: number
+    prediction: string
+    impact: string
+  }>
   interactions: Interaction[]
 }
 
@@ -38,7 +92,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   const [date, setDate] = useState<DateRange | undefined>()
 
   // Transformer les données pour le nouveau dashboard
-  const allContacts = useMemo(() => clients as Contact[], [clients])
+  const allContacts = useMemo(() => clients, [clients])
 
   const { contacts, projets, contrats } = useMemo(() => {
     if (!date?.from) {
@@ -116,52 +170,61 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
     const enCours = projets.filter((p) => p.statut?.includes("cours") || p.statut?.includes("traiter")).length
 
     // Performance par commercial
-    const projetIdToCommercial = new Map(allProjets.map((p) => [p.projet_id, p.commercial || "Non assigné"]))
-
-    // 1. Calculate all-time project counts
-    const allTimeProjectCounts = new Map()
-    allProjets.forEach((p) => {
-      const commercial = p.commercial || "Non assigné"
-      if (commercial !== "Non assigné") {
-        allTimeProjectCounts.set(commercial, (allTimeProjectCounts.get(commercial) || 0) + 1)
-      }
+    // Filtrer les contrats annulés/inactifs comme dans CommissionsAnalyticsTab
+    const cancelledStatuses = ['annulé', 'annule', 'perdu', 'refusé', 'résilié']
+    const activeContrats = contrats.filter((contrat) => {
+      const statutProjet = contrat.projet_statut || 'N/A'
+      const statutLower = statutProjet.toLowerCase()
+      const isCancelled = cancelledStatuses.some(status => statutLower.includes(status))
+      return !isCancelled && statutProjet !== 'N/A'
     })
 
-    // 2. Calculate period-specific stats from filtered `contrats`
+    // Calculate period-specific projet and contrat stats for each commercial
     const periodStats = new Map()
-    contrats.forEach((contrat) => {
-      if (contrat.projet_id) {
-        const commercial = projetIdToCommercial.get(contrat.projet_id)
-        if (commercial && commercial !== "Non assigné") {
-          if (!periodStats.has(commercial)) {
-            periodStats.set(commercial, { contrats: 0, ca: 0 })
-          }
-          const stats = periodStats.get(commercial)
-          stats.contrats++
-          stats.ca += contrat.prime_brute_annuelle || 0
+    activeContrats.forEach((contrat) => {
+      const commercial = contrat.commercial || "Non assigné"
+      if (commercial !== "Non assigné") {
+        if (!periodStats.has(commercial)) {
+          periodStats.set(commercial, { contrats: 0, ca: 0 })
         }
+        const stats = periodStats.get(commercial)
+        stats.contrats++
+        stats.ca += contrat.prime_brute_annuelle || 0
       }
     })
 
-    // 3. Determine active commercials in the period from filtered `projets` and `contrats`
-    const commercialsActiveInPeriod = new Set()
-    projets.forEach((p) => {
-      if (p.commercial) commercialsActiveInPeriod.add(p.commercial)
+    // Count projets per commercial from filtered projets
+    const projetStats = new Map()
+    projets.forEach((projet) => {
+      const commercial = projet.commercial || "Non assigné"
+      if (commercial !== "Non assigné") {
+        if (!projetStats.has(commercial)) {
+          projetStats.set(commercial, { projets: 0 })
+        }
+        const stats = projetStats.get(commercial)
+        stats.projets++
+      }
     })
+
+    // Determine active commercials in the period (those with contrats or projets)
+    const commercialsActiveInPeriod = new Set()
     for (const commercial of periodStats.keys()) {
       commercialsActiveInPeriod.add(commercial)
     }
+    for (const commercial of projetStats.keys()) {
+      commercialsActiveInPeriod.add(commercial)
+    }
 
-    // 4. Build the final stats list for active commercials
+    // Build the final stats list for active commercials
     const commerciauxStats = new Map()
     commercialsActiveInPeriod.forEach((commercial) => {
-      const totalProjets = allTimeProjectCounts.get(commercial) || 0
-      const { contrats: periodContrats, ca: periodCa } = periodStats.get(commercial) || { contrats: 0, ca: 0 }
+      const contratStats = periodStats.get(commercial) || { contrats: 0, ca: 0 }
+      const projStats = projetStats.get(commercial) || { projets: 0 }
 
       commerciauxStats.set(commercial, {
-        projets: totalProjets,
-        contrats: periodContrats,
-        ca: periodCa,
+        projets: projStats.projets,  // Real project count
+        contrats: contratStats.contrats,  // Real contract count
+        ca: contratStats.ca,
       })
     })
 
@@ -219,10 +282,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
             </div>
             <DateRangePicker date={date} onSelect={setDate} />
           </div>
-          <TabsList className="grid w-auto grid-cols-3">
+          <TabsList className="grid w-auto grid-cols-2">
             <TabsTrigger value="commercial">Performances Commerciales</TabsTrigger>
             <TabsTrigger value="analytics">Analyses Détaillées</TabsTrigger>
-            <TabsTrigger value="ai">Assistant IA</TabsTrigger>
           </TabsList>
         </div>
 
@@ -334,8 +396,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
                       <div className="text-right">
                         <div className="text-xl font-bold text-primary">€{(item.stats.ca / 1000).toFixed(0)}k</div>
                         <div className="text-sm text-muted-foreground">
-                          {item.stats.projets > 0 ? ((item.stats.contrats / item.stats.projets) * 100).toFixed(1) : 0}%
-                          conversion
+                          {item.stats.projets > 0 ? ((item.stats.contrats / item.stats.projets) * 100).toFixed(0) : item.stats.contrats > 0 ? 'N/A' : 0}%
+                          {item.stats.projets > 0 ? '% conversion' : item.stats.contrats > 0 ? ' (contrats sans projets)' : '% conversion'}
                         </div>
                       </div>
                     </div>
@@ -402,12 +464,17 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         </TabsContent>
 
         <TabsContent value="analytics">
-          <CommercialAnalytics contacts={contacts} projets={projets} contrats={contrats} />
-        </TabsContent>
+           <div className="hero-section rounded-2xl p-6">
+             <div className="text-center mb-6">
+               <BarChart3 className="w-16 h-16 mx-auto mb-4 text-blue-600" />
+               <h3 className="text-2xl font-bold text-gray-900 mb-2">Analyses Détaillées</h3>
+               <p className="text-gray-600">Vue approfondie des performances et des insights</p>
+             </div>
+             <CommercialAnalytics contacts={contacts} projets={projets} contrats={contrats} />
+           </div>
+         </TabsContent>
 
-        <TabsContent value="ai">
-          <AIAnalytics contacts={contacts} projets={projets} contrats={contrats} />
-        </TabsContent>
+
       </Tabs>
     </div>
   )

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { cn } from "../lib/utils"
 
 const sidebarNavItems = [
   { title: "Dashboard", href: "/", icon: "fas fa-home" },
@@ -12,7 +12,7 @@ const sidebarNavItems = [
   { title: "Projets", href: "/projects", icon: "fas fa-tasks" },
   { title: "Tâches", href: "/tasks", icon: "fas fa-check-square" },
   { title: "Contrats", href: "/contracts", icon: "fas fa-file-contract" },
-  { title: "Automations", href: "/automations", icon: "fas fa-robot" },
+  { title: "Campagnes", href: "/campaigns", icon: "fas fa-bullhorn" },
   { title: "Analytics", href: "/analytics", icon: "fas fa-chart-line" },
   { title: "Paramètres", href: "/settings", icon: "fas fa-cog" },
   { title: "Monitoring", href: "/monitoring", icon: "fas fa-desktop" },

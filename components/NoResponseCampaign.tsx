@@ -115,7 +115,7 @@ export function NoResponseCampaign() {
         campagne_id: campaign.id,
         project_id: project.projet_id,
         contact_id: project.contact_id,
-        email_destinataire: project.contact.email,
+        destinataire: project.contact.email,
         sujet: "Relance - Votre projet d'assurance",
         contenu_html: `<p>Bonjour ${project.contact.prenom || project.contact.civilite},</p><p>Nous n'avons pas eu de retour concernant votre projet d'assurance...</p>`,
         statut: "pending",

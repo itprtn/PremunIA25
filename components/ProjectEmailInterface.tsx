@@ -14,7 +14,7 @@ interface ProjectEmailInterfaceProps {
 
 interface EmailHistory {
   id: number
-  email_destinataire: string
+  destinataire: string
   sujet: string
   status: string
   sent_at: string
@@ -172,7 +172,7 @@ export function ProjectEmailInterface({ projectId }: ProjectEmailInterfaceProps)
                   </div>
                   <div className="text-sm text-muted-foreground">
                     <div className="flex items-center space-x-4">
-                      <span>📧 {email.email_destinataire}</span>
+                      <span>📧 {email.destinataire}</span>
                       <span className="flex items-center space-x-1">
                         <Clock className="w-3 h-3" />
                         <span>{new Date(email.sent_at).toLocaleString("fr-FR")}</span>

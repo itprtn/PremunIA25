@@ -1,9 +1,9 @@
 import type React from "react"
 import { Link } from "react-router-dom"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import type { Interaction, Contact } from "@/lib/types"
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card"
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar"
+import { Badge } from "./ui/badge"
+import type { Interaction, Contact } from "../lib/types"
 import { Mail, Calendar, Phone, User } from "lucide-react"
 
 const getInteractionIcon = (type: Interaction["type"]) => {

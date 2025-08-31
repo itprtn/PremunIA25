@@ -128,7 +128,7 @@ export function EmailSender({
           await supabase.from("email_history").insert({
             project_id: projectId,
             contact_id: contactId,
-            email_destinataire: emailData.to,
+            destinataire: emailData.to,
             sujet: personalizedEmail.subject,
             status: "sent",
             message_id: data.messageId,
