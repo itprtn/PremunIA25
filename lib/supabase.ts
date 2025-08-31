@@ -1,7 +1,8 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient, Session } from "@supabase/supabase-js"
 
-export const supabaseUrl = "https://wybhtprxiwgzmpmnfceq.supabase.co"
-export const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5Ymh0cHJ4aXdnem1wbW5mY2VxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwMzIwODksImV4cCI6MjA2NjYwODA4OX0.ctFmwHC_iitVB16WB7lY616lIp0CAHBUGRaoi56ruqc"
+// Configuration Supabase - Utilise les variables d'environnement ou les valeurs par défaut
+export const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://wybhtprxiwgzmpmnfceq.supabase.co"
+export const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind5Ymh0cHJ4aXdnem1wbW5mY2VxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwMzIwODksImV4cCI6MjA2NjYwODA4OX0.ctFmwHC_iitVB16WB7lY616lIp0CAHBUGRaoi56ruqc"
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
@@ -51,7 +52,7 @@ export interface Segment {
   id: number
   nom: string
   description?: string
-  criteres: any
+  criteres: Record<string, string | number | boolean>
   couleur?: string
   created_at?: string
 }
@@ -62,7 +63,7 @@ export interface EmailTemplate {
   sujet: string
   contenu_html: string
   contenu_texte?: string
-  variables?: any
+  variables?: Record<string, string | number>
   categorie?: string
   statut?: string
   created_at?: string
@@ -237,7 +238,7 @@ export const api = {
     if (error) throw error
   },
 
-  onAuthStateChange(callback: (event: string, session: any) => void) {
+  onAuthStateChange(callback: (event: string, session: Session | null) => void) {
     return supabase.auth.onAuthStateChange(callback)
   },
 }

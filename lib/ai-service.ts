@@ -1,5 +1,7 @@
+import { Contact } from "./types"
+
 export const aiService = {
-  async analyzeContacts(contacts: any[]) {
+  async analyzeContacts(contacts: Contact[]) {
     // Simulation d'analyse IA des contacts
     return contacts.slice(0, 5).map((contact, index) => ({
       nom: `Insight ${index + 1}: ${contact.prenom} ${contact.nom}`,
