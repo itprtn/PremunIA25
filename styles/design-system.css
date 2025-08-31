@@ -1,0 +1,378 @@
+/* ==========================================
+   PREMUN IA - SYSTÈME DE DESIGN UNIFIÉ
+   Version optimisée pour performances et esthétisme
+   ========================================== */
+
+@layer base {
+  /* Variables CSS pour un design system cohérent */
+  :root {
+    /* === COULEURS PRINCIPALES === */
+    /* Palette Premun IA - Bleu vers Violet */
+    --premun-primary-50: 240 100% 97%;
+    --premun-primary-100: 235 100% 94%;
+    --premun-primary-200: 230 100% 87%;
+    --premun-primary-300: 225 100% 77%;
+    --premun-primary-400: 220 91% 68%;
+    --premun-primary-500: 220 91% 58%; /* Couleur principale */
+    --premun-primary-600: 220 91% 48%;
+    --premun-primary-700: 220 91% 38%;
+    --premun-primary-800: 220 91% 28%;
+    --premun-primary-900: 220 91% 18%;
+
+    /* Palette Accent - Violet */
+    --premun-accent-50: 270 100% 97%;
+    --premun-accent-100: 268 100% 94%;
+    --premun-accent-200: 265 100% 87%;
+    --premun-accent-300: 262 100% 77%;
+    --premun-accent-400: 262 83% 68%;
+    --premun-accent-500: 262 83% 58%; /* Couleur accent */
+    --premun-accent-600: 262 83% 48%;
+    --premun-accent-700: 262 83% 38%;
+    --premun-accent-800: 262 83% 28%;
+    --premun-accent-900: 262 83% 18%;
+
+    /* === GRADIENTS MODERNES === */
+    --gradient-hero: linear-gradient(135deg, 
+      hsl(var(--premun-primary-500)) 0%, 
+      hsl(var(--premun-accent-500)) 100%);
+    
+    --gradient-card: linear-gradient(135deg, 
+      hsl(var(--premun-primary-50)) 0%, 
+      hsl(var(--premun-accent-50)) 100%);
+    
+    --gradient-success: linear-gradient(135deg, 
+      hsl(142, 71%, 45%) 0%, 
+      hsl(160, 71%, 55%) 100%);
+    
+    --gradient-warning: linear-gradient(135deg, 
+      hsl(38, 92%, 50%) 0%, 
+      hsl(48, 92%, 60%) 100%);
+
+    /* === OMBRES MODERNES === */
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    
+    /* Ombres colorées pour les éléments importants */
+    --shadow-primary: 0 10px 25px -5px hsl(var(--premun-primary-500) / 0.3);
+    --shadow-accent: 0 10px 25px -5px hsl(var(--premun-accent-500) / 0.3);
+
+    /* === TRANSITIONS FLUIDES === */
+    --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* === SPACING HARMONIEUX === */
+    --spacing-xs: 0.25rem;  /* 4px */
+    --spacing-sm: 0.5rem;   /* 8px */
+    --spacing-md: 1rem;     /* 16px */
+    --spacing-lg: 1.5rem;   /* 24px */
+    --spacing-xl: 2rem;     /* 32px */
+    --spacing-2xl: 3rem;    /* 48px */
+    --spacing-3xl: 4rem;    /* 64px */
+
+    /* === TYPOGRAPHIE === */
+    --font-size-xs: 0.75rem;    /* 12px */
+    --font-size-sm: 0.875rem;   /* 14px */
+    --font-size-base: 1rem;     /* 16px */
+    --font-size-lg: 1.125rem;   /* 18px */
+    --font-size-xl: 1.25rem;    /* 20px */
+    --font-size-2xl: 1.5rem;    /* 24px */
+    --font-size-3xl: 1.875rem;  /* 30px */
+    --font-size-4xl: 2.25rem;   /* 36px */
+  }
+
+  /* Mode sombre optimisé */
+  .dark {
+    --premun-primary-500: 220 91% 68%;
+    --premun-accent-500: 262 83% 68%;
+    --gradient-hero: linear-gradient(135deg, 
+      hsl(var(--premun-primary-500)) 0%, 
+      hsl(var(--premun-accent-500)) 100%);
+  }
+}
+
+@layer utilities {
+  /* === CLASSES UTILITAIRES MODERNES === */
+  
+  /* Gradients optimisés */
+  .premun-gradient-primary {
+    background: var(--gradient-hero);
+  }
+  
+  .premun-gradient-card {
+    background: var(--gradient-card);
+  }
+  
+  .premun-gradient-text {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glass morphism optimisé */
+  .premun-glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .premun-glass-dark {
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Cards modernes avec animations */
+  .premun-card {
+    @apply rounded-2xl premun-glass border-0 shadow-md;
+    transition: var(--transition-base);
+    will-change: transform, box-shadow;
+  }
+
+  .premun-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .premun-card-interactive:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-2xl);
+  }
+
+  /* Animations performantes */
+  .premun-fade-in {
+    animation: premunFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .premun-slide-up {
+    animation: premunSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .premun-scale-in {
+    animation: premunScaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Boutons modernes */
+  .premun-btn-primary {
+    @apply premun-gradient-primary text-white font-semibold rounded-xl px-6 py-3;
+    @apply shadow-md hover:shadow-lg active:scale-95;
+    transition: var(--transition-base);
+    will-change: transform, box-shadow;
+  }
+
+  .premun-btn-secondary {
+    @apply bg-white/80 text-slate-700 font-semibold rounded-xl px-6 py-3;
+    @apply border border-slate-200 shadow-sm hover:shadow-md;
+    @apply hover:bg-white hover:border-slate-300;
+    transition: var(--transition-base);
+    will-change: transform, box-shadow, background-color;
+  }
+
+  /* Loading states optimisés */
+  .premun-skeleton {
+    @apply bg-gradient-to-r from-slate-200 via-slate-100 to-slate-200;
+    background-size: 200% 100%;
+    animation: premunSkeleton 2s ease-in-out infinite;
+  }
+
+  /* États interactifs */
+  .premun-hover-lift {
+    transition: var(--transition-base);
+    will-change: transform;
+  }
+
+  .premun-hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .premun-hover-glow:hover {
+    box-shadow: var(--shadow-primary);
+  }
+
+  /* Conteneurs de contenu */
+  .premun-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .premun-section {
+    @apply py-12 lg:py-16;
+  }
+
+  /* Grilles responsives */
+  .premun-grid-auto {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .premun-grid-responsive {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: var(--spacing-md);
+  }
+
+  @media (min-width: 768px) {
+    .premun-grid-responsive {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-lg);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .premun-grid-responsive {
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-xl);
+    }
+  }
+
+  /* Optimisations de performance */
+  .premun-optimize-rendering {
+    contain: layout style paint;
+    will-change: auto;
+  }
+
+  .premun-lazy-load {
+    content-visibility: auto;
+    contain-intrinsic-size: 300px;
+  }
+}
+
+/* === ANIMATIONS OPTIMISÉES === */
+@keyframes premunFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes premunSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes premunScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes premunSkeleton {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes premunPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* === COMPOSANTS SPÉCIALISÉS === */
+.premun-analytics-hero {
+  @apply premun-glass rounded-3xl p-8 mb-8;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.9) 0%, 
+    rgba(248, 250, 252, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.premun-stat-card {
+  @apply premun-card p-6;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.95) 0%, 
+    rgba(251, 252, 254, 0.95) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.premun-stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--gradient-hero);
+  border-radius: 1rem 1rem 0 0;
+}
+
+.premun-chart-container {
+  @apply premun-card p-6;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.98) 0%, 
+    rgba(252, 254, 255, 0.98) 100%);
+  min-height: 400px;
+}
+
+/* Optimisations pour les graphiques */
+.premun-chart-wrapper {
+  contain: layout style;
+  will-change: auto;
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 768px) {
+  .premun-analytics-hero {
+    @apply p-6 rounded-2xl;
+  }
+  
+  .premun-stat-card {
+    @apply p-4;
+  }
+  
+  .premun-chart-container {
+    @apply p-4;
+    min-height: 300px;
+  }
+}
+
+/* === DARK MODE === */
+.dark .premun-analytics-hero {
+  background: linear-gradient(135deg, 
+    rgba(15, 23, 42, 0.9) 0%, 
+    rgba(30, 41, 59, 0.9) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .premun-stat-card {
+  background: linear-gradient(135deg, 
+    rgba(15, 23, 42, 0.95) 0%, 
+    rgba(30, 41, 59, 0.95) 100%);
+}
+
+.dark .premun-chart-container {
+  background: linear-gradient(135deg, 
+    rgba(15, 23, 42, 0.98) 0%, 
+    rgba(30, 41, 59, 0.98) 100%);
+}
