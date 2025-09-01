@@ -62,7 +62,7 @@ export function ProjectsTab() {
   const [contactFilter, setContactFilter] = useState("all")
   const [contactFrequencyFilter, setContactFrequencyFilter] = useState("all")
   const [scoreSort, setScoreSort] = useState("default")
-  
+
   // Dialogs
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false)
   const [isRdvDialogOpen, setIsRdvDialogOpen] = useState(false)
@@ -85,7 +85,7 @@ export function ProjectsTab() {
   const [loadingStats, setLoadingStats] = useState(true)
   const [contactEmailCounts, setContactEmailCounts] = useState<Map<number, number>>(new Map())
   const [isSyncingBrevo, setIsSyncingBrevo] = useState(false)
-  
+
   // Email form
   const [emailData, setEmailData] = useState({
     templateId: '',
@@ -93,7 +93,7 @@ export function ProjectsTab() {
     content: '',
     useCustomContent: false
   })
-  
+
   // RDV form
   const [rdvData, setRdvData] = useState({
     dateProposee: '',
@@ -102,7 +102,6 @@ export function ProjectsTab() {
 
   const loadContactEmailCounts = async () => {
     try {
-      // Get email counts per contact
       const { data: emailCounts, error } = await supabase
         .from('envois_email')
         .select('contact_id')
@@ -110,7 +109,6 @@ export function ProjectsTab() {
 
       if (error) throw error
 
-      // Count emails per contact
       const counts = new Map<number, number>()
       emailCounts?.forEach(email => {
         if (email.contact_id) {
@@ -121,11 +119,9 @@ export function ProjectsTab() {
       setContactEmailCounts(counts)
     } catch (error) {
       console.error("Error loading contact email counts:", error)
-      // Set empty map on error
       setContactEmailCounts(new Map())
     }
   }
-
 
   useEffect(() => {
     const loadData = async () => {
@@ -141,8 +137,6 @@ export function ProjectsTab() {
   const loadProjects = async () => {
     try {
       setLoading(true)
-
-      // Récupérer les projets avec validation d'intégrité
       const { data: rawProjects, error } = await supabase
         .from("projets")
         .select(`
@@ -158,75 +152,12 @@ export function ProjectsTab() {
         .order("created_at", { ascending: false })
 
       if (error) throw error
-
-      // Validation et nettoyage des données avec approche plus souple
       let validProjects = rawProjects || []
-      let projectsWithoutEmail = 0
-      let projectsWithIssues = 0
-
-      // Filtrer et valider chaque projet avec approche plus tolérante
-      validProjects = validProjects.filter(project => {
-        let hasCriticalIssue = false
-        const issues: string[] = []
-
-        // Vérifier que le projet a un ID valide
-        if (!project.projet_id) {
-          issues.push('ID projet manquant')
-          hasCriticalIssue = true
-        }
-
-        // Vérifier que le contact existe (mais pas forcément l'email)
-        if (!project.contact) {
-          issues.push('Contact manquant')
-          hasCriticalIssue = true
-        } else if (!project.contact.email) {
-          issues.push('Email contact manquant')
-          projectsWithoutEmail++
-        }
-
-        // Vérifier la cohérence des données identifiant/contact
-        if (project.contact_id && project.contact && project.contact_id !== project.contact.identifiant) {
-          issues.push('Incohérence contact_id')
-          projectsWithIssues++
-        }
-
-        // Nouvelle approche : seulement exclure les projets ayant des problèmes CRITIQUES
-        if (hasCriticalIssue) {
-          console.warn(`🚨 Problème critique projet ${project.projet_id}:`, issues.join(', '))
-          projectsWithIssues++
-          return false // Exclure seulement les projets avec problèmes critiques
-        }
-
-        // Garder les projets sans email mais les marquer pour affichage spécial
-        if (!project.contact.email) {
-          console.warn(`⚠️ Projet ${project.projet_id} pas d'email:`, `${project.contact.prenom} ${project.contact.nom}`)
-        }
-
-        return true // Garder le projet même sans email
-      })
-
-      console.log('🔍 VALIDATION DES PROJETS:')
-      console.log('• Projets chargés:', rawProjects?.length || 0)
-      console.log('• Projets affichés:', validProjects.length)
-      console.log('• Projets sans email (avisés):', projectsWithoutEmail)
-      console.log('• Projets avec problèmes mineurs:', projectsWithIssues)
-
-      if (projectsWithoutEmail > 0) {
-        toast({
-          title: "Informations sur les projets",
-          description: `${projectsWithoutEmail} projets sans email affichés - vérifiez manuellement si nécessaire`,
-          variant: "default"
-        })
-      }
-
+      validProjects = validProjects.filter(project => project.projet_id && project.contact)
       setProjects(validProjects)
     } catch (error) {
       console.error("Error loading projects:", error)
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger les projets",
-        variant: "destructive"
-      })
+      toast({ title: "Erreur", description: "Impossible de charger les projets", variant: "destructive" })
     } finally {
       setLoading(false)
     }
@@ -241,10 +172,8 @@ export function ProjectsTab() {
         .not("commercial", "is", null)
 
       if (error) throw error
-      
       const statuses = [...new Set(data?.map(p => p.statut).filter(Boolean))] as string[]
       const commercials = [...new Set(data?.map(p => p.commercial).filter(Boolean))] as string[]
-      
       setDistinctStatuses(statuses.sort())
       setDistinctCommercials(commercials.sort())
     } catch (error) {
@@ -270,16 +199,12 @@ export function ProjectsTab() {
   const loadEmailStats = async () => {
     try {
       setLoadingStats(true)
-
-      // Get all email records for statistics with project linkage verification
       const { data: emails, error } = await supabase
         .from('envois_email')
         .select('statut, date_envoi, date_ouverture, date_clic, projet_id')
         .order('created_at', { ascending: false })
 
       if (error) throw error
-
-      // Calculate statistics based on project-linked emails (more accurate for Projects tab)
       const emailsWithProjects = emails?.filter(e => e.projet_id) || []
       const totalSent = emailsWithProjects.length
       const delivered = emailsWithProjects.filter(e => e.statut === 'delivre' || e.statut === 'envoye').length
@@ -287,43 +212,179 @@ export function ProjectsTab() {
       const clicked = emailsWithProjects.filter(e => e.date_clic).length
       const bounced = emailsWithProjects.filter(e => e.statut === 'echec' || e.statut === 'bounce').length
 
-      // Calculate rates
       const openRate = totalSent > 0 ? Math.round((opened / totalSent) * 100 * 100) / 100 : 0
       const clickRate = totalSent > 0 ? Math.round((clicked / totalSent) * 100 * 100) / 100 : 0
       const bounceRate = totalSent > 0 ? Math.round((bounced / totalSent) * 100 * 100) / 100 : 0
 
-      console.log('🔍 DEBUG: Email stats breakdown:')
-      console.log('• Total emails:', emails?.length || 0)
-      console.log('• Emails with projects:', emailsWithProjects.length)
-      console.log('• Total sent (with projects):', totalSent)
-      console.log('• Open rate:', openRate + '%')
-      console.log('• Click rate:', clickRate + '%')
-
-      setEmailStats({
-        totalSent,
-        delivered,
-        opened,
-        clicked,
-        bounced,
-        openRate,
-        clickRate,
-        bounceRate
-      })
+      setEmailStats({ totalSent, delivered, opened, clicked, bounced, openRate, clickRate, bounceRate })
     } catch (error) {
       console.error("Error loading email stats:", error)
-      // Set default values on error
-      setEmailStats({
-        totalSent: 0,
-        delivered: 0,
-        opened: 0,
-        clicked: 0,
-        bounced: 0,
-        openRate: 0,
-        clickRate: 0,
-        bounceRate: 0
-      })
+      setEmailStats({ totalSent: 0, delivered: 0, opened: 0, clicked: 0, bounced: 0, openRate: 0, clickRate: 0, bounceRate: 0 })
     } finally {
       setLoadingStats(false)
+    }
+  }
+
+  // Personnalisation
+  const personalizeContent = (content: string, recipient: any) => {
+    return content
+      .replace(/{{nom_client}}/g, `${recipient.prenom} ${recipient.nom}`)
+      .replace(/{{prenom}}/g, recipient.prenom)
+      .replace(/{{nom}}/g, recipient.nom)
+      .replace(/{{nom_commercial}}/g, recipient.commercial)
+      .replace(/{{lien_rdv}}/g, recipient.lien_rdv || '#')
+      .replace(/{{infos_premunia}}/g, `📞 Contactez-nous : Téléphone : 01 23 45 67 89 Email : info@premunia.com`)
+  }
+
+  const validateEmailData = (recipient: any) => {
+    const errors = []
+    if (!recipient.projectId) errors.push(`Projet ID manquant pour ${recipient.email}`)
+    if (!recipient.contactId) errors.push(`Contact ID manquant pour ${recipient.email}`)
+    if (!recipient.email || !recipient.email.includes('@')) errors.push(`Email invalide: ${recipient.email}`)
+    return errors
+  }
+
+  // 🚀 VERSION CORRIGÉE
+  const handleSendGroupEmail = async () => {
+    const allSelected = getSelectedProjectsWithEmail()
+    let recipients = allSelected.filter(p => p.hasEmail)
+    const withoutEmail = allSelected.filter(p => !p.hasEmail)
+
+    if (recipients.length === 0) {
+      toast({ title: "Aucun destinataire avec email", description: `Vous avez sélectionné ${allSelected.length} projet(s), mais aucun n'a d'adresse email valide.`, variant: "destructive" })
+      return
+    }
+
+    setIsSendingEmail(true)
+    try {
+      const { data: campaign, error: campaignError } = await supabase
+        .from('campagnes_email')
+        .insert({
+          nom: `Envoi depuis Projets - ${new Date().toLocaleDateString()}`,
+          statut: "en_cours",
+          statut_cible: "projet",
+          contact_count: recipients.length,
+          date_lancement: new Date().toISOString()
+        })
+        .select()
+        .single()
+
+      if (campaignError) throw campaignError
+
+      let successCount = 0
+      let errorCount = 0
+      for (const recipient of recipients) {
+        try {
+          const selectedTemplate = templates.find(t => t.id === parseInt(emailData.templateId))
+          const subject = emailData.useCustomContent ? emailData.subject : selectedTemplate?.sujet || 'Email Premunia'
+          const htmlContent = emailData.useCustomContent ? emailData.content : selectedTemplate?.contenu_html || ''
+          const textContent = selectedTemplate?.contenu_texte || ''
+
+          const personalizedHtml = personalizeContent(htmlContent, recipient)
+          const personalizedText = personalizeContent(textContent, recipient)
+          const personalizedSubject = personalizeContent(subject, recipient)
+
+          const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email', {
+            body: { to: recipient.email, subject: personalizedSubject, html: personalizedHtml, text: personalizedText }
+          })
+          if (emailError || !emailResult?.success) throw new Error(emailError?.message || emailResult?.error || 'Échec envoi')
+
+          successCount++
+
+          await supabase.from('envois_email').insert({
+            campagne_id: campaign.id,
+            contact_id: recipient.contactId,
+            projet_id: recipient.projectId,
+            destinataire: recipient.email,
+            sujet: personalizedSubject,
+            contenu_html: personalizedHtml,
+            contenu_texte: personalizedText,
+            statut: 'envoye',
+            date_envoi: new Date().toISOString(),
+            date_ouverture: null,
+            date_clic: null,
+            erreur_message: null
+          })
+
+        } catch (err: any) {
+          errorCount++
+          await supabase.from('envois_email').insert({
+            campagne_id: campaign.id,
+            contact_id: recipient.contactId,
+            projet_id: recipient.projectId,
+            destinataire: recipient.email,
+            sujet: emailData.subject || 'Échec envoi',
+            contenu_html: '',
+            contenu_texte: '',
+            statut: 'echec',
+            date_envoi: new Date().toISOString(),
+            erreur_message: err.message || 'Erreur inconnue',
+            date_ouverture: null,
+            date_clic: null
+          })
+        }
+      }
+
+      await supabase.from('campagnes_email').update({
+        statut: "terminee",
+        nombre_envoyes: successCount,
+        nombre_echecs: errorCount
+      }).eq('id', campaign.id)
+
+      toast({ title: "Envoi terminé", description: `${successCount} emails envoyés • ${errorCount} erreurs` })
+      await loadEmailStats()
+      await loadContactEmailCounts()
+      setIsEmailDialogOpen(false)
+      setSelectedProjects(new Set())
+      setEmailData({ templateId: '', subject: '', content: '', useCustomContent: false })
+    } catch (error: any) {
+      console.error('Erreur envoi groupé:', error)
+      toast({ title: "Erreur d'envoi", description: error.message || "Impossible d'envoyer les emails", variant: "destructive" })
+    } finally {
+      setIsSendingEmail(false)
+    }
+  }
+
+  // 🔄 Historique corrigé
+  const loadProjectEmailHistory = async (project: Project) => {
+    try {
+      setLoadingHistory(true)
+      setSelectedProject(project)
+
+      const { data: emails, error } = await supabase
+        .from('envois_email')
+        .select('id, campagne_id, contact_id, projet_id, destinataire, sujet, contenu_html, contenu_texte, statut, date_envoi, date_ouverture, date_clic, created_at')
+        .eq('projet_id', project.projet_id)
+        .order('created_at', { ascending: false })
+
+      if (error) throw error
+      if (emails && emails.length > 0) {
+        const campaignIds = [...new Set(emails.map(e => e.campagne_id).filter(Boolean))]
+        const { data: campaigns } = await supabase
+          .from('campagnes_email')
+          .select('id, nom, created_at, statut, type')
+          .in('id', campaignIds)
+
+        const historyData = campaigns?.map(campaign => ({
+          campaign,
+          emails: emails.filter(e => e.campagne_id === campaign.id),
+          emailCount: emails.filter(e => e.campagne_id === campaign.id).length,
+          sentCount: emails.filter(e => e.campagne_id === campaign.id && e.statut === 'envoye').length,
+          openedCount: emails.filter(e => e.campagne_id === campaign.id && e.date_ouverture).length,
+          clickedCount: emails.filter(e => e.campagne_id === campaign.id && e.date_clic).length,
+          errorCount: emails.filter(e => e.campagne_id === campaign.id && e.statut === 'echec').length
+        })) || []
+
+        setProjectHistory(historyData)
+        setIsHistoryOpen(true)
+      } else {
+        toast({ title: "Aucun email trouvé", description: "Ce projet n'a pas d'historique d'emails.", variant: "destructive" })
+      }
+    } catch (error) {
+      console.error('Erreur loadProjectEmailHistory:', error)
+      toast({ title: "Erreur", description: "Impossible de charger l'historique des emails", variant: "destructive" })
+    } finally {
+      setLoadingHistory(false)
     }
   }
 
@@ -427,338 +488,10 @@ export function ProjectsTab() {
       }))
   }
 
-  // Personnalisation des variables dans le contenu
-  const personalizeContent = (content: string, recipient: any) => {
-    return content
-      .replace(/{{nom_client}}/g, `${recipient.prenom} ${recipient.nom}`)
-      .replace(/{{prenom}}/g, recipient.prenom)
-      .replace(/{{nom}}/g, recipient.nom)
-      .replace(/{{nom_commercial}}/g, recipient.commercial)
-      .replace(/{{lien_rdv}}/g, recipient.lien_rdv || '#')
-      .replace(/{{infos_premunia}}/g, `
-        📞 Contactez-nous :
-        Téléphone : 01 23 45 67 89
-        Email : info@premunia.com
-        Disponible du lundi au vendredi, 9h-18h
-      `)
-  }
-
-  // Validation des données avant envoi d'email
-  const validateEmailData = (recipient: any) => {
-    const errors = []
-
-    if (!recipient.projectId) {
-      errors.push(`Projet ID manquant pour ${recipient.email}`)
-    }
-
-    if (!recipient.contactId) {
-      errors.push(`Contact ID manquant pour ${recipient.email}`)
-    }
-
-    if (!recipient.email || !recipient.email.includes('@')) {
-      errors.push(`Email invalide: ${recipient.email}`)
-    }
-
-    return errors
-  }
-
-  // Envoi groupé d'emails avec validation renforcée
-  const handleSendGroupEmail = async () => {
-    const allSelected = getSelectedProjectsWithEmail()
-    let recipients = allSelected.filter(p => p.hasEmail)
-    const withoutEmail = allSelected.filter(p => !p.hasEmail)
-
-    if (recipients.length === 0) {
-      toast({
-        title: "Aucun destinataire avec email",
-        description: `Vous avez sélectionné ${allSelected.length} projet(s), mais aucun n'a d'adresse email valide.`,
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (withoutEmail.length > 0) {
-      toast({
-        title: "Information",
-        description: `${withoutEmail.length} projet(s) sélectionné(s) sans email valide seront ignorés.`,
-        variant: "default"
-      })
-    }
-
-    // Finaliser la liste des destinataires
-    console.log(`📧 Envoi d'emails : ${recipients.length} destinataires valides`)
-    console.log(`⚠️ Exclus : ${withoutEmail.length} projets sans email`)
-
-    // Validation préalable de tous les destinataires
-    const validationErrors: string[] = []
-    for (const recipient of recipients) {
-      const errors = validateEmailData(recipient)
-      validationErrors.push(...errors)
-    }
-
-    if (validationErrors.length > 0) {
-      toast({
-        title: "Erreurs de validation",
-        description: `Problèmes détectés: ${validationErrors.join(', ')}`,
-        variant: "destructive"
-      })
-      return
-    }
-
-    setIsSendingEmail(true)
-
-    try {
-      // Vérifier l'intégrité des projets avant envoi
-      const projectIds = recipients.map(r => r.projectId)
-      const { data: validProjects, error: projectCheckError } = await supabase
-        .from('projets')
-        .select('projet_id, contact_id')
-        .in('projet_id', projectIds)
-
-      if (projectCheckError) {
-        console.error('Erreur vérification projets:', projectCheckError)
-        throw new Error('Impossible de vérifier l\'intégrité des projets')
-      }
-
-      const validProjectIds = validProjects?.map(p => p.projet_id) || []
-      const invalidRecipients = recipients.filter(r => !validProjectIds.includes(r.projectId))
-
-      if (invalidRecipients.length > 0) {
-        console.warn('Destinataires avec projets invalides:', invalidRecipients)
-        toast({
-          title: "Attention",
-          description: `${invalidRecipients.length} destinataires ont des projets invalides et seront ignorés`,
-          variant: "destructive"
-        })
-        // Filtrer les destinataires valides
-        recipients = recipients.filter((r: any) => validProjectIds.includes(r.projectId))
-      }
-
-      if (recipients.length === 0) {
-        throw new Error('Aucun destinataire valide après validation')
-      }
-
-      // Créer une campagne
-      const { data: campaign, error: campaignError } = await supabase
-        .from('envois_groupes')
-        .insert({
-          nom_campagne: `Envoi groupé - ${new Date().toLocaleDateString()}`,
-          nombre_destinataires: recipients.length,
-          template_id: emailData.templateId ? parseInt(emailData.templateId) : null,
-          statut_cible: statusFilter !== 'all' ? statusFilter : null,
-          commercial: commercialFilter !== 'all' ? commercialFilter : null
-        })
-        .select()
-        .single()
-
-      if (campaignError) throw campaignError
-
-      let successCount = 0
-      let errorCount = 0
-      const errors: string[] = []
-
-      // Envoyer les emails un par un via Brevo
-      for (const recipient of recipients) {
-        try {
-          const selectedTemplate = templates.find(t => t.id === parseInt(emailData.templateId))
-          const subject = emailData.useCustomContent ? emailData.subject : selectedTemplate?.sujet || 'Email Premun IA'
-          const htmlContent = emailData.useCustomContent ? emailData.content : selectedTemplate?.contenu_html || ''
-          const textContent = selectedTemplate?.contenu_texte || ''
-
-          // Personnaliser le contenu
-          const personalizedHtml = personalizeContent(htmlContent, recipient)
-          const personalizedText = personalizeContent(textContent, recipient)
-          const personalizedSubject = personalizeContent(subject, recipient)
-
-          // Appeler l'edge function d'envoi d'email
-          const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-email', {
-            body: {
-              to: recipient.email,
-              subject: personalizedSubject,
-              html: personalizedHtml,
-              text: personalizedText
-            }
-          })
-
-          if (emailError) {
-            console.error('Erreur envoi email:', emailError)
-            throw new Error(emailError.message || 'Erreur lors de l\'envoi')
-          }
-
-          if (!emailResult?.success) {
-            throw new Error(emailResult?.error || 'Échec de l\'envoi de l\'email')
-          }
-
-          console.log(`Email envoyé avec succès à ${recipient.email}`)
-          successCount++
-
-          // Enregistrer l'envoi individuel avec validation renforcée et logging détaillé
-          try {
-            console.log('🔍 DEBUG: Tentative d\'insertion email envoi:', {
-              campagne_id: campaign.id, // FIX: Lier à la campagne créée
-              contact_id: recipient.contactId,
-              projet_id: recipient.projectId,
-              destinataire: recipient.email,
-              sujet_length: personalizedSubject.length,
-              statut: 'envoye'
-            })
-
-            const { data: emailRecord, error: emailLogError } = await supabase
-              .from('envois_email')
-              .insert({
-                campagne_id: campaign.id, // FIX: Lier à la campagne créée
-                contact_id: recipient.contactId,
-                projet_id: recipient.projectId,
-                destinataire: recipient.email,
-                sujet: personalizedSubject,
-                contenu_html: personalizedHtml,
-                contenu_texte: personalizedText,
-                statut: 'envoye',
-                date_envoi: new Date().toISOString(),
-                // Add missing required fields with default values
-                date_ouverture: null,
-                date_clic: null,
-                erreur_message: null
-              })
-              .select()
-              .single()
-
-            if (emailLogError) {
-              console.error('❌ Erreur lors du logging email:', emailLogError)
-              console.error('🔍 DEBUG: Details erreur:', {
-                code: emailLogError.code,
-                message: emailLogError.message,
-                details: emailLogError.details,
-                hint: emailLogError.hint
-              })
-
-              // Vérifier si c'est une violation de clé étrangère ou trigger
-              if (emailLogError.message.includes('foreign key') || emailLogError.message.includes('trigger')) {
-                console.error('🔍 DEBUG: Violation FK ou trigger détectée:', {
-                  contact_id: recipient.contactId,
-                  projet_id: recipient.projectId,
-                  error_details: emailLogError.message
-                })
-              }
-
-              toast({
-                title: "Erreur de tracking",
-                description: `L'email a été envoyé mais n'a pas pu être tracké: ${emailLogError.message}`,
-                variant: "destructive"
-              })
-            } else {
-              console.log('✅ Email tracké avec succès:', emailRecord.id)
-            }
-          } catch (unexpectedError) {
-            console.error('💥 Erreur inattendue lors de la sauvegarde email:', unexpectedError)
-            toast({
-              title: "Erreur système",
-              description: "Erreur inattendue lors de la sauvegarde",
-              variant: "destructive"
-            })
-          }
-
-        } catch (error: any) {
-          console.error(`Erreur envoi email à ${recipient.email}:`, error)
-          errorCount++
-          errors.push(`${recipient.email}: ${error.message}`)
-
-          // Enregistrer l'échec individuel avec validation renforcée et logging
-          try {
-            console.log('🔍 DEBUG: Tentative d\'insertion échec email:', {
-              campagne_id: campaign.id, // FIX: Lier aussi les échecs à la campagne
-              contact_id: recipient.contactId,
-              projet_id: recipient.projectId,
-              destinataire: recipient.email,
-              statut: 'echec',
-              erreur_message_len: error.message?.length || 0
-            })
-
-            const { data: failedEmailRecord, error: failedEmailLogError } = await supabase
-              .from('envois_email')
-              .insert({
-                campagne_id: campaign.id, // FIX: Lier aussi les échecs à la campagne
-                contact_id: recipient.contactId,
-                projet_id: recipient.projectId,
-                destinataire: recipient.email,
-                sujet: emailData.subject || 'Échec envoi',
-                contenu_html: '', // Pas de contenu pour les échecs
-                contenu_texte: '',
-                statut: 'echec',
-                date_envoi: new Date().toISOString(),
-                erreur_message: error.message || 'Erreur inconnue',
-                // Add missing required fields
-                date_ouverture: null,
-                date_clic: null
-              })
-              .select()
-              .single()
-
-            if (failedEmailLogError) {
-              console.error('❌ Erreur lors du logging échec:', failedEmailLogError)
-              console.error('🔍 DEBUG: Details erreur échec:', {
-                code: failedEmailLogError.code,
-                message: failedEmailLogError.message,
-                details: failedEmailLogError.details
-              })
-            } else {
-              console.log('❌ Échec d\'email tracké:', failedEmailRecord.id)
-            }
-          } catch (unexpectedError) {
-            console.error('💥 Erreur inattendue lors de la sauvegarde échec email:', unexpectedError)
-          }
-        }
-      }
-
-      // Mettre à jour les stats de la campagne
-      await supabase
-        .from('envois_groupes')
-        .update({
-          nombre_envoyes: successCount,
-          nombre_echecs: errorCount
-        })
-        .eq('id', campaign.id)
-
-      // Notification de résultat avec validation
-      if (successCount > 0) {
-        toast({
-          title: "Emails envoyés avec succès",
-          description: `${successCount} emails envoyés et trackés correctement ${errorCount > 0 ? `(${errorCount} échecs)` : ''}`,
-        })
-      }
-
-      if (errorCount > 0 && successCount === 0) {
-        toast({
-          title: "Échec d'envoi",
-          description: `Tous les emails ont échoué. Vérifiez la configuration email.`,
-          variant: "destructive"
-        })
-      }
-
-      // Recharger les statistiques après envoi
-      await loadEmailStats()
-      await loadContactEmailCounts()
-
-      setIsEmailDialogOpen(false)
-      setSelectedProjects(new Set())
-      setEmailData({ templateId: '', subject: '', content: '', useCustomContent: false })
-
-    } catch (error: any) {
-      console.error('Erreur envoi groupé:', error)
-      toast({
-        title: "Erreur d'envoi",
-        description: error.message || "Impossible d'envoyer les emails",
-        variant: "destructive"
-      })
-    } finally {
-      setIsSendingEmail(false)
-    }
-  }
-
   // Créer des RDV pour les projets sélectionnés
   const handleCreateRdv = async () => {
     const selectedProjectsList = paginatedProjects.filter(p => selectedProjects.has(p.projet_id))
-    
+
     if (selectedProjectsList.length === 0) {
       toast({
         title: "Aucun projet sélectionné",
@@ -789,7 +522,7 @@ export function ProjectsTab() {
 
         // Générer le lien unique
         const lienRdv = `${window.location.origin}/rdv/${rdv.id}`
-        
+
         // Mettre à jour avec le lien
         await supabase
           .from('rdv')
@@ -822,91 +555,6 @@ export function ProjectsTab() {
     }
   }
 
-  const loadProjectEmailHistory = async (project: Project) => {
-    try {
-      setLoadingHistory(true)
-      setSelectedProject(project)
-
-      console.log('🔍 DEBUG: Loading project email history for project ID:', project.projet_id)
-
-      // Get emails for this project
-      const { data: emails, error } = await supabase
-        .from('envois_email')
-        .select('id, campagne_id, contact_id, projet_id, destinataire, sujet, contenu_html, contenu_texte, statut, date_envoi, date_ouverture, date_clic, created_at')
-        .eq('projet_id', project.projet_id)
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('🔍 DEBUG: Error loading emails:', error)
-        throw error
-      }
-
-      console.log('🔍 DEBUG: Found emails:', emails?.length || 0)
-
-      if (emails && emails.length > 0) {
-        // Group emails by campaign and get campaign details
-        const campaignEmailsMap = new Map()
-
-        // Get unique campaign IDs
-        const campaignIds = [...new Set(emails.map(e => e.campagne_id).filter(Boolean))]
-        console.log('🔍 DEBUG: Campaign IDs found:', campaignIds)
-
-        if (campaignIds.length > 0) {
-          // Fetch campaign details
-          const { data: campaigns, error: campaignError } = await supabase
-            .from('envois_groupes')
-            .select('id, nom_campagne, created_at, commercial')
-            .in('id', campaignIds)
-
-          if (campaignError) {
-            console.error('🔍 DEBUG: Error loading campaigns:', campaignError)
-          } else {
-            console.log('🔍 DEBUG: Campaigns loaded:', campaigns?.length || 0)
-
-            // Group emails by campaign
-            campaigns?.forEach(campaign => {
-              const campaignEmails = emails.filter(e => e.campagne_id === campaign.id)
-              campaignEmailsMap.set(campaign.id, {
-                campaign,
-                emails: campaignEmails
-              })
-            })
-          }
-        }
-
-        // Create history data
-        const historyData = Array.from(campaignEmailsMap.values()).map(({ campaign, emails }) => ({
-          campaign,
-          emails,
-          emailCount: emails.length,
-          sentCount: emails.filter(e => e.statut === 'envoye').length,
-          openedCount: emails.filter(e => e.statut === 'ouvert').length,
-          clickedCount: emails.filter(e => e.statut === 'clique').length,
-          errorCount: emails.filter(e => e.statut === 'echec').length
-        }))
-
-        console.log('🔍 DEBUG: History data created:', historyData.length)
-        setProjectHistory(historyData)
-        setIsHistoryOpen(true)
-      } else {
-        toast({
-          title: "Aucun email trouvé",
-          description: "Ce projet n'a pas d'historique d'emails.",
-          variant: "destructive"
-        })
-      }
-    } catch (error) {
-      console.error('🔍 DEBUG: Error in loadProjectEmailHistory:', error)
-      toast({
-        title: "Erreur",
-        description: "Impossible de charger l'historique des emails",
-        variant: "destructive"
-      })
-    } finally {
-      setLoadingHistory(false)
-    }
-  }
-
   // Synchroniser manuellement avec Brevo
   const handleBrevoSync = async () => {
     setIsSyncingBrevo(true)
@@ -914,10 +562,10 @@ export function ProjectsTab() {
     try {
       // Utiliser le service de synchronisation Brevo pour mettre à jour les stats
       const brevoStats = await brevoSync.getAggregatedEmailStats()
-      
+
       // Transformer les statistiques de Brevo en format attendu par notre composant
       const aggregateStats = brevoUtils.formatEmailStats(brevoStats)
-      
+
       // Mettre à jour les statistiques avec les données Brevo
       setEmailStats({
         totalSent: aggregateStats.totalSent,
@@ -999,9 +647,6 @@ export function ProjectsTab() {
     }
   }
 
-
-
-
   const getStatusColor = (statut: string) => {
     const statusLower = statut?.toLowerCase()
     switch (true) {
@@ -1016,6 +661,14 @@ export function ProjectsTab() {
       default:
         return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center p-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   if (loading) {
@@ -1308,8 +961,8 @@ export function ProjectsTab() {
                     </Button>
                   )
                 })()}
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsRdvDialogOpen(true)}
                   className="gap-2"
                 >
@@ -1385,9 +1038,9 @@ export function ProjectsTab() {
            <div className="space-y-4">
              {paginatedProjects.map((project) => {
                const emailCount = project.contact?.identifiant ? contactEmailCounts.get(project.contact.identifiant) || 0 : 0
-               
+
                return (
-                <div 
+                <div
                   key={project.projet_id}
                   className="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all duration-300"
                 >
@@ -1397,7 +1050,7 @@ export function ProjectsTab() {
                       onCheckedChange={() => toggleProjectSelection(project.projet_id)}
                       className="mt-1"
                     />
-                    
+
                     <div className="flex-1 grid grid-cols-1 lg:grid-cols-6 gap-6 items-start">
                       {/* Date & ID */}
                       <div className="space-y-1">
@@ -1470,8 +1123,8 @@ export function ProjectsTab() {
                           <span className="text-xs text-muted-foreground">emails envoyés</span>
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {emailCount === 0 ? "Pas encore contacté" : 
-                           emailCount === 1 ? "1 fois contacté" : 
+                          {emailCount === 0 ? "Pas encore contacté" :
+                           emailCount === 1 ? "1 fois contacté" :
                            `${emailCount} fois contacté`}
                         </div>
                       </div>
@@ -1545,13 +1198,13 @@ export function ProjectsTab() {
               Envoyer des emails personnalisés à plusieurs projets sélectionnés
             </div>
           </DialogHeader>
-          
+
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Template existant</Label>
-                <Select 
-                  value={emailData.templateId} 
+                <Select
+                  value={emailData.templateId}
                   onValueChange={handleTemplateSelect}
                   disabled={emailData.useCustomContent}
                 >
@@ -1567,12 +1220,12 @@ export function ProjectsTab() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex items-center space-x-2 mt-8">
                 <Checkbox
                   checked={emailData.useCustomContent}
                   onCheckedChange={(checked) => setEmailData({
-                    ...emailData, 
+                    ...emailData,
                     useCustomContent: !!checked,
                     templateId: checked ? '' : emailData.templateId
                   })}
@@ -1635,7 +1288,7 @@ export function ProjectsTab() {
               Créer des propositions de rendez-vous pour les projets sélectionnés
             </div>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Date proposée</Label>
@@ -1679,171 +1332,176 @@ export function ProjectsTab() {
         </DialogContent>
       </Dialog>
 
+       {/* Dialog Historique par projet */}
+       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+         <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+           <DialogHeader>
+             <DialogTitle className="flex items-center gap-2">
+               <Mail className="h-5 w-5" />
+               Historique Email - {selectedProject?.contact?.prenom} {selectedProject?.contact?.nom}
+             </DialogTitle>
+             <div className="text-sm text-muted-foreground">
+               Consulter l'historique des emails et campagnes pour ce projet
+             </div>
+           </DialogHeader>
 
-      {/* Dialog Historique par projet */}
-      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Mail className="h-5 w-5" />
-              Historique Email - {selectedProject?.contact?.prenom} {selectedProject?.contact?.nom}
-            </DialogTitle>
-            <div className="text-sm text-muted-foreground">
-              Consulter l'historique des emails et campagnes pour ce projet
-            </div>
-          </DialogHeader>
+           {projectHistory.length > 0 ? (
+             <div className="space-y-6 mt-6">
+               {projectHistory.map((item: any, index: number) => (
+                 <Card key={index} className="border-l-4 border-l-blue-500">
+                   <CardHeader>
+                     <div className="flex justify-between items-start">
+                       <div className="flex-1">
+                         <div className="flex items-center gap-3 mb-2">
+                           <div className="font-medium text-lg">
+                             {item.campaign.nom_campagne}
+                           </div>
+                           <Badge variant="outline">
+                             Campagne #{item.campaign.id}
+                           </Badge>
+                           <Badge className={getStatusColor(item.campaign.commercial)}>
+                             {item.campaign.commercial}
+                           </Badge>
+                         </div>
+                         <div className="text-sm text-muted-foreground">
+                           Créée le {new Date(item.campaign.created_at).toLocaleDateString('fr-FR')}
+                         </div>
+                       </div>
+                       <Button
+                         variant="outline"
+                         size="sm"
+                         onClick={() => {
+                           if (selectedProject?.contact?.email) {
+                             history(selectedProject.contact.email)
+                               .then(historyData => {
+                                 console.log('📧 Email history for project:', historyData)
+                                 toast({
+                                   title: "Historique Email chargé",
+                                   description: `${historyData.length} événements trouvés`,
+                                 })
+                               })
+                               .catch(error => {
+                                 console.error('Error loading Brevo history:', error)
+                                 toast({
+                                   title: "Erreur",
+                                   description: "Impossible de charger l'historique Email",
+                                   variant: "destructive"
+                                 })
+                               })
+                           }
+                         }}
+                         disabled={!selectedProject?.contact?.email}
+                       >
+                         <Mail className="h-4 w-4 mr-2" />
+                         Historique Email
+                       </Button>
+                     </div>
+                   </CardHeader>
+                   <CardContent>
+                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+                       <div className="text-center p-3 bg-gray-50 rounded-lg">
+                         <div className="text-2xl font-bold text-gray-700">{item.emailCount}</div>
+                         <div className="text-xs text-muted-foreground">Total emails</div>
+                       </div>
+                       <div className="text-center p-3 bg-green-50 rounded-lg">
+                         <div className="text-2xl font-bold text-green-600">{item.sentCount}</div>
+                         <div className="text-xs text-muted-foreground">Envoyés</div>
+                       </div>
+                       <div className="text-center p-3 bg-blue-50 rounded-lg">
+                         <div className="text-2xl font-bold text-blue-600">{item.openedCount}</div>
+                         <div className="text-xs text-muted-foreground">Ouverts</div>
+                       </div>
+                       <div className="text-center p-3 bg-purple-50 rounded-lg">
+                         <div className="text-2xl font-bold text-purple-600">{item.clickedCount}</div>
+                         <div className="text-xs text-muted-foreground">Clics</div>
+                       </div>
+                       <div className="text-center p-3 bg-red-50 rounded-lg">
+                         <div className="text-2xl font-bold text-red-600">{item.errorCount}</div>
+                         <div className="text-xs text-muted-foreground">Erreurs</div>
+                       </div>
+                     </div>
 
-          {projectHistory.length > 0 ? (
-            <div className="space-y-6 mt-6">
-              {projectHistory.map((item, index) => (
-                <Card key={index} className="border-l-4 border-l-blue-500">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <div className="font-medium text-lg">
-                            {item.campaign.nom_campagne}
-                          </div>
-                          <Badge variant="outline">
-                            Campagne #{item.campaign.id}
-                          </Badge>
-                          <Badge className={getStatusColor(item.campaign.commercial)}>
-                            {item.campaign.commercial}
-                          </Badge>
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Créée le {new Date(item.campaign.created_at).toLocaleDateString('fr-FR')}
-                        </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          if (selectedProject?.contact?.email) {
-                            history(selectedProject.contact.email)
-                              .then(historyData => {
-                                console.log('📧 Email history for project:', historyData)
-                                toast({
-                                  title: "Historique Email chargé",
-                                  description: `${historyData.length} événements trouvés`,
-                                })
-                              })
-                              .catch(error => {
-                                console.error('Error loading Brevo history:', error)
-                                toast({
-                                  title: "Erreur",
-                                  description: "Impossible de charger l'historique Email",
-                                  variant: "destructive"
-                                })
-                              })
-                          }
-                        }}
-                        disabled={!selectedProject?.contact?.email}
-                      >
-                        <Mail className="h-4 w-4 mr-2" />
-                        Historique Email
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
-                      <div className="text-center p-3 bg-gray-50 rounded-lg">
-                        <div className="text-2xl font-bold text-gray-700">{item.emailCount}</div>
-                        <div className="text-xs text-muted-foreground">Total emails</div>
-                      </div>
-                      <div className="text-center p-3 bg-green-50 rounded-lg">
-                        <div className="text-2xl font-bold text-green-600">{item.sentCount}</div>
-                        <div className="text-xs text-muted-foreground">Envoyés</div>
-                      </div>
-                      <div className="text-center p-3 bg-blue-50 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-600">{item.openedCount}</div>
-                        <div className="text-xs text-muted-foreground">Ouverts</div>
-                      </div>
-                      <div className="text-center p-3 bg-purple-50 rounded-lg">
-                        <div className="text-2xl font-bold text-purple-600">{item.clickedCount}</div>
-                        <div className="text-xs text-muted-foreground">Clics</div>
-                      </div>
-                      <div className="text-center p-3 bg-red-50 rounded-lg">
-                        <div className="text-2xl font-bold text-red-600">{item.errorCount}</div>
-                        <div className="text-xs text-muted-foreground">Erreurs</div>
-                      </div>
-                    </div>
+                     {/* Détails des emails pour cette campagne */}
+                     <div className="space-y-3">
+                       <h4 className="font-medium">Détails des emails :</h4>
+                       <div className="max-h-96 overflow-y-auto space-y-3">
+                         {item.emails.map((email: any, emailIndex: number) => (
+                           <div key={emailIndex} className="p-4 bg-gray-50 rounded-lg border">
+                             <div className="flex justify-between items-start mb-3">
+                               <div className="flex-1">
+                                 <div className="flex items-center gap-2 mb-2">
+                                   <Badge className={getStatusColor(email.statut)}>
+                                     {email.statut}
+                                   </Badge>
+                                   <span className="text-sm font-medium">{email.sujet}</span>
+                                 </div>
+                                 <div className="text-xs text-muted-foreground">
+                                   Destinataire: {email.destinataire}
+                                 </div>
+                               </div>
+                               <div className="text-xs text-muted-foreground text-right">
+                                 {email.date_envoi && new Date(email.date_envoi).toLocaleString('fr-FR')}
+                               </div>
+                             </div>
 
-                    {/* Détails des emails pour cette campagne */}
-                    <div className="space-y-3">
-                      <h4 className="font-medium">Détails des emails :</h4>
-                      <div className="max-h-96 overflow-y-auto space-y-3">
-                        {item.emails.map((email: any, emailIndex: number) => (
-                          <div key={emailIndex} className="p-4 bg-gray-50 rounded-lg border">
-                            <div className="flex justify-between items-start mb-3">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Badge className={getStatusColor(email.statut)}>
-                                    {email.statut}
-                                  </Badge>
-                                  <span className="text-sm font-medium">{email.sujet}</span>
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  Destinataire: {email.destinataire}
-                                </div>
-                              </div>
-                              <div className="text-xs text-muted-foreground text-right">
-                                {email.date_envoi && new Date(email.date_envoi).toLocaleString('fr-FR')}
-                              </div>
-                            </div>
+                             {/* Contenu de l'email */}
+                             {(email.contenu_html || email.contenu_texte) && (
+                               <div className="mb-3">
+                                 <div className="text-xs font-medium text-muted-foreground mb-2">Contenu de l'email:</div>
+                                 <div className="max-h-32 overflow-y-auto bg-white p-3 rounded border text-sm">
+                                   {email.contenu_html ? (
+                                     <div dangerouslySetInnerHTML={{ __html: email.contenu_html }} />
+                                   ) : (
+                                     <div className="whitespace-pre-wrap">{email.contenu_texte}</div>
+                                   )}
+                                 </div>
+                               </div>
+                             )}
 
-                            {/* Contenu de l'email */}
-                            {(email.contenu_html || email.contenu_texte) && (
-                              <div className="mb-3">
-                                <div className="text-xs font-medium text-muted-foreground mb-2">Contenu de l'email:</div>
-                                <div className="max-h-32 overflow-y-auto bg-white p-3 rounded border text-sm">
-                                  {email.contenu_html ? (
-                                    <div dangerouslySetInnerHTML={{ __html: email.contenu_html }} />
-                                  ) : (
-                                    <div className="whitespace-pre-wrap">{email.contenu_texte}</div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Suivi des interactions */}
-                            {(email.date_ouverture || email.date_clic) && (
-                              <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
-                                {email.date_ouverture && (
-                                  <div className="flex items-center gap-1">
-                                    <Eye className="h-3 w-3" />
-                                    Ouvert: {new Date(email.date_ouverture).toLocaleString('fr-FR')}
-                                  </div>
-                                )}
-                                {email.date_clic && (
-                                  <div className="flex items-center gap-1">
-                                    <Mail className="h-3 w-3" />
-                                    Clic: {new Date(email.date_clic).toLocaleString('fr-FR')}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-medium mb-2">Aucun historique trouvé</h3>
-                <p className="text-muted-foreground">
-                  Ce projet n'a pas d'historique d'emails.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </DialogContent>
-      </Dialog>
+                             {/* Suivi des interactions */}
+                             {(email.date_ouverture || email.date_clic) && (
+                               <div className="flex gap-4 mt-2 text-xs text-muted-foreground">
+                                 {email.date_ouverture && (
+                                   <div className="flex items-center gap-1">
+                                     <Eye className="h-3 w-3" />
+                                     Ouvert: {new Date(email.date_ouverture).toLocaleString('fr-FR')}
+                                   </div>
+                                 )}
+                                 {email.date_clic && (
+                                   <div className="flex items-center gap-1">
+                                     <Mail className="h-3 w-3" />
+                                     Clic: {new Date(email.date_clic).toLocaleString('fr-FR')}
+                                   </div>
+                                 )}
+                               </div>
+                             )}
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   </CardContent>
+                 </Card>
+               ))}
+             </div>
+           ) : (
+             <Card>
+               <CardContent className="p-8 text-center">
+                 <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                 <h3 className="text-lg font-medium mb-2">Aucun historique trouvé</h3>
+                 <p className="text-muted-foreground">
+                   Ce projet n'a pas d'historique d'emails.
+                 </p>
+               </CardContent>
+             </Card>
+           )}
+         </DialogContent>
+       </Dialog>
+    </div>
+  )
+  return (
+    <div>
+      <h1>Nouveau contenu pour ProjectsTab</h1>
+      {/* Contenu simplifié temporaire */}
     </div>
   )
 }
